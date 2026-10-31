@@ -1,0 +1,12 @@
+{
+  "name": "pos-scripts",
+  "private": true,
+  "type": "module",
+  "description": "One-off admin scripts (seed data). Uses the Firebase Admin SDK with a service account key.",
+  "scripts": {
+    "seed": "node seed.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

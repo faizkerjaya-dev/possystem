@@ -1,0 +1,17 @@
+{
+  "name": "pos-print-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runs on the counter PC. Takes print jobs from Firestore one at a time and sends them to the LAN ESC/POS printer.",
+  "main": "index.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node index.js",
+    "test-print": "node index.js --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.7.0"
+  }
+}
