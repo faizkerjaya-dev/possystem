@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { query, where } from 'firebase/firestore';
 import { Delete, Lock } from 'lucide-react';
 import { COL } from '@/config/collections';
@@ -9,6 +9,7 @@ import { PIN_LENGTH, signInWithPin } from '@/services/auth';
 import { useLiveQuery } from '@/hooks/useLive';
 import { useAuth } from '@/hooks/useAuth';
 import { describeError } from '@/lib/errors';
+import { ConnectionInfo } from '@/components/layout/ConnectionInfo';
 import type { Staff } from '@/types/models';
 
 /**
@@ -23,6 +24,14 @@ export function LoginPage() {
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slow, setSlow] = useState(false);
+
+  // If Firestore never answers (database not created, wrong project), say so instead of a blank list
+  useEffect(() => {
+    if (!staff.loading) return;
+    const t = setTimeout(() => setSlow(true), 10000);
+    return () => clearTimeout(t);
+  }, [staff.loading]);
 
   useEffect(() => {
     if (pin.length !== PIN_LENGTH || !picked || busy) return;
@@ -48,17 +57,31 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-10 bg-kds p-6 text-cream lg:flex-row lg:gap-16">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center gap-10 bg-kds p-6 text-cream lg:flex-row lg:gap-16">
       <div className="flex w-full max-w-sm flex-col gap-4">
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
           <Lock className="text-white" size={26} aria-hidden />
         </span>
         <h1 className="text-3xl font-extrabold">Who is using this device?</h1>
-        {staff.error && <p className="rounded-xl bg-danger p-3 text-sm font-semibold">{staff.error}</p>}
-        {!staff.loading && staff.data.length === 0 && !staff.error && (
-          <p className="rounded-xl bg-[#2B2D31] p-3 text-sm">
-            No staff found. Run the seed script first (docs/DEPLOY.md, step 5).
+        {staff.error && (
+          <p className="rounded-xl bg-danger p-3 text-sm font-semibold leading-relaxed">
+            {staff.error}
+            {staff.error.includes('NOT_ALLOWED') && ' — Publish firestore.rules di Firebase › Firestore Database › Rules.'}
           </p>
+        )}
+        {staff.loading && slow && (
+          <p className="rounded-xl bg-[#2B2D31] p-3 text-sm leading-relaxed">
+            [DB_UNREACHABLE] Tidak dapat sambung ke Firestore. Semak: Firestore Database sudah dibuat (ID “(default)”) dan
+            VITE_FIREBASE_PROJECT_ID betul.
+          </p>
+        )}
+        {!staff.loading && staff.data.length === 0 && !staff.error && (
+          <div className="flex flex-col gap-3 rounded-2xl bg-[#2B2D31] p-4">
+            <span className="text-sm leading-relaxed">Sistem ini belum disediakan. Belum ada staf dalam pangkalan data.</span>
+            <Link to="/setup" className="flex h-14 items-center justify-center rounded-xl bg-accent text-base font-extrabold text-white">
+              Setup kali pertama
+            </Link>
+          </div>
         )}
         <div className="grid max-h-[50vh] grid-cols-2 gap-2 overflow-y-auto">
           {staff.data.map((s) => (
@@ -110,6 +133,9 @@ export function LoginPage() {
           ))}
         </div>
         {busy && <span className="text-sm text-[#B5B1A8]">Signing in…</span>}
+      </div>
+      <div className="w-full lg:absolute lg:bottom-4 lg:left-0">
+        <ConnectionInfo />
       </div>
     </div>
   );
