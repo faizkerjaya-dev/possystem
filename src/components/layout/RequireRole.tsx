@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettings } from '@/hooks/useSettings';
 import { can, type Permission } from '@/config/permissions';
@@ -7,6 +7,7 @@ import { ScreenMessage } from '@/components/ui/controls';
 import { Button } from '@/components/ui/Button';
 import { signOut } from '@/services/auth';
 import { ERROR_MESSAGES } from '@/lib/errors';
+import { ConnectionInfo } from './ConnectionInfo';
 
 /** Route guard: must be signed in, have a staff profile, and (optionally) a permission. */
 export function RequireRole({ perm, children }: { perm?: Permission; children: ReactNode }) {
@@ -30,7 +31,22 @@ export function RequireRole({ perm, children }: { perm?: Permission; children: R
       </div>
     );
   if (loaded && !exists)
-    return <ScreenMessage tone="error" title="[SETTINGS_MISSING]" detail={error ?? ERROR_MESSAGES.SETTINGS_MISSING} />;
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center gap-4 p-6">
+        <ScreenMessage
+          tone="error"
+          title="[SETTINGS_MISSING]"
+          detail={error ?? 'Setup kedai belum selesai. Owner/Admin boleh teruskan setup sekarang.'}
+        />
+        {(staff.role === 'owner' || staff.role === 'admin') && (
+          <Link to="/setup" className="flex h-14 items-center rounded-xl bg-accent px-6 text-base font-extrabold text-white">
+            Teruskan setup
+          </Link>
+        )}
+        <Button onClick={() => signOut()}>Sign out</Button>
+        <ConnectionInfo dark={false} />
+      </div>
+    );
   if (perm && !can(staff.role, perm))
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-4">
